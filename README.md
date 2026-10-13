@@ -12,6 +12,12 @@ npm test
 
 Trang tĩnh nằm trong `public/`. `public/names.json` và `public/data-info.json` được tạo khi build.
 
+## Dữ liệu cập nhật
+
+`data/huggies-current.json` chứa các cặp tên–ý nghĩa từ 23 bài viết Huggies, đọc ngày 13/10/2026. Mỗi nguồn có URL và thời điểm đọc; tên nguyên bản được giữ để đối chiếu. Đây là cập nhật một phần: các tên chưa đối chiếu vẫn dùng dữ liệu năm 2017.
+
+Build thay thế mô tả cũ cho những tên có dữ liệu mới, giữ nguyên lời của nguồn và gộp các mô tả khác nhau. Tổ hợp ba chữ chỉ được nhập khi nguồn liệt kê không có họ; những ví dụ họ tên bốn chữ chưa rõ ranh giới họ được giữ riêng trong `fullNameExamples`. Phạm vi nguồn và số lượng sau khi build nằm trong `public/data-info.json`.
+
 ## Dữ liệu gốc (2017)
 
 Danh sách tên và ý nghĩa tên tiếng Việt lấy từ huggies (cập nhật cuối: 2017)
