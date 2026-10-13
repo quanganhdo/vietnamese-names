@@ -1,0 +1,26 @@
+{
+  "id": "./",
+  "name": "tenhay.fyi",
+  "short_name": "tenhay.fyi",
+  "lang": "vi",
+  "description": "Tra cứu tên tiếng Việt và ý nghĩa. Ghép với họ, lọc và lưu tên yêu thích.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "browser",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
