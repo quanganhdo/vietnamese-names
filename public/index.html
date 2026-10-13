@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Tra cứu tên tiếng Việt và ý nghĩa. Ghép với họ, lọc và lưu tên yêu thích.">
+  <title>tenhay.fyi</title>
+  <link rel="canonical" href="https://tenhay.fyi/">
+  <link rel="stylesheet" href="./style.css?v=28">
+  <script type="module" src="./app.mjs?v=28"></script>
+</head>
+<body>
+  <a class="skip" href="#results">Đến danh sách tên</a>
+  <div class="page">
+    <header>
+      <div class="heading"><h1>tenhay.fyi</h1><span class="total"><span id="total-names">9,129</span> tên</span></div>
+    </header>
+    <main>
+      <section class="filters" aria-label="Tìm và lọc tên">
+        <div class="search-field"><label for="query">Tìm kiếm</label><div class="clearable-field"><input id="query" type="search" placeholder="Tên hoặc ý nghĩa" autocomplete="off" maxlength="200"><button type="button" class="clear-input" data-input="query" aria-controls="query" aria-label="Xóa tìm kiếm" hidden><span aria-hidden="true">×</span></button></div><fieldset class="search-scope"><legend class="sr-only">Tìm trong</legend><div class="options"><label><input type="radio" name="scope" value="name" checked> Tên</label><label><input type="radio" name="scope" value="all"> Tên và ý nghĩa</label></div></fieldset></div>
+        <div class="family-field"><label for="family">Họ</label><div class="clearable-field"><input id="family" type="text" value="Nguyễn" autocapitalize="words" spellcheck="false" placeholder="Nguyễn" autocomplete="off" maxlength="80"><button type="button" class="clear-input" data-input="family" aria-controls="family" aria-label="Xóa họ" hidden><span aria-hidden="true">×</span></button></div><p id="family-example" hidden></p></div>
+        <div class="given-field"><label for="given">Tên gọi <span class="optional">(nếu đã chọn)</span></label><div class="clearable-field"><input id="given" type="text" autocapitalize="words" spellcheck="false" placeholder="An" autocomplete="off" maxlength="80" aria-describedby="given-note"><button type="button" class="clear-input" data-input="given" aria-controls="given" aria-label="Xóa tên gọi" hidden><span aria-hidden="true">×</span></button></div><p id="given-note" class="field-note">Điền để tìm tên đệm.</p></div>
+        <div class="filter-options">
+          <fieldset><legend>Giới tính</legend><div class="options"><label><input type="radio" name="gender" value="all" checked> Sao cũng được</label><label><input type="radio" name="gender" value="male"> Nam</label><label><input type="radio" name="gender" value="female"> Nữ</label></div></fieldset>
+          <fieldset><legend>Độ dài</legend><div class="options"><label><input type="radio" name="length" value="all" checked> Sao cũng được</label><label><input type="radio" name="length" value="1"> 1 chữ</label><label><input type="radio" name="length" value="2"> 2 chữ</label></div></fieldset>
+          <fieldset><legend>Hiển thị tên</legend><div class="options preview-options"><label><input type="radio" name="display" value="vi" checked> Tiếng Việt</label><label><input type="radio" name="display" value="en"> Tiếng Anh, không dấu</label></div></fieldset>
+          <button id="reset" type="button" class="text-button">Xóa bộ lọc</button>
+        </div>
+      </section>
+      <div class="workspace">
+      <section id="results" class="results" aria-label="Danh sách tên" tabindex="-1">
+        <div class="results-toolbar">
+          <div class="tabs" aria-label="Danh sách"><button id="browse-tab" class="tab active" type="button" aria-pressed="true">Tất cả tên</button><button id="saved-tab" class="tab" type="button" aria-pressed="false">Đã lưu <span id="saved-count">0</span></button></div>
+          <div class="order-actions" role="group" aria-label="Thứ tự tên"><button id="shuffle" type="button" aria-pressed="true" disabled>Ngẫu nhiên</button><button id="alphabetical" type="button" aria-label="Sắp xếp A–Z theo tên gọi" aria-pressed="false" disabled>A–Z</button></div>
+        </div>
+        <div class="result-meta"><div class="result-info"><p id="result-count" role="status" tabindex="-1">Đang tải…</p><span class="preview-hint">Bấm vào tên để xem thử.</span></div><div class="result-actions"><button id="copy-saved" class="text-button" type="button" hidden>Sao chép danh sách</button><button id="share-saved" class="text-button share-action" type="button" hidden>Chia sẻ danh sách</button></div></div>
+        <div id="name-grid" class="name-grid" aria-busy="true"></div>
+        <div id="empty" class="empty" hidden><h2 id="empty-title">Không tìm thấy tên.</h2><p id="empty-copy">Thử từ khóa khác hoặc bớt điều kiện lọc.</p><button id="empty-reset" type="button">Xóa bộ lọc</button></div>
+        <div id="load-error" class="empty" hidden><h2>Chưa tải được danh sách.</h2><p>Kiểm tra kết nối rồi thử lại.</p><button id="retry" type="button">Thử lại</button></div>
+        <div class="scroll-status"><div id="scroll-sentinel" aria-hidden="true" hidden></div><p id="shown-count"></p></div>
+        <section id="broader-results" class="broader-results" aria-labelledby="broader-heading" hidden><div class="broader-heading"><div><h2 id="broader-heading">Tên ngoài bộ lọc</h2><p id="broader-count"></p></div><button id="expand-results" type="button">Bỏ bộ lọc</button></div><div id="broader-grid" class="name-grid"></div></section>
+        <noscript><p>Bật JavaScript để tìm và lưu tên.</p></noscript>
+      </section>
+        <aside id="preview-panel" class="preview-panel" aria-labelledby="preview-heading">
+          <div class="preview-heading"><h2 id="preview-heading">Xem thử</h2><div class="preview-actions"><button id="preview-save" type="button" aria-pressed="false" disabled>☆ Lưu tên</button><button id="close-preview" type="button" class="text-button">Đóng</button></div></div>
+          <p id="preview-empty">Chọn tên trong danh sách.</p>
+          <div id="preview-body" hidden>
+            <dl class="preview-formats">
+              <div><dt>Tiếng Việt</dt><dd id="preview-vn"></dd><dd id="preview-meaning-block" class="preview-meaning-block"><p id="preview-meaning"></p></dd></div>
+              <div><dt class="sr-only">Danh sách lớp</dt><dd><figure class="class-preview"><img id="class-preview-image" alt=""></figure></dd></div>
+              <div><dt>VIẾT HOA</dt><dd id="preview-upper"></dd></div>
+              <div><dt>Tiếng Anh, không dấu</dt><dd id="preview-en"></dd><dd class="name-card-preview"><img id="name-card-image" alt=""></dd></div>
+            </dl>
+            <button id="share-name" class="text-button share-action" type="button" disabled>Chia sẻ tên này</button>
+          </div>
+        </aside>
+      </div>
+    </main>
+    <footer><p>Dữ liệu: Huggies, 2017. <a href="https://github.com/quanganhdo/vietnamese-names">Nguồn dữ liệu</a></p><button id="share-page" type="button" class="text-button share-action">Chia sẻ</button></footer>
+  </div>
+  <dialog id="preview-modal" aria-labelledby="preview-heading"></dialog>
+  <dialog id="share-modal" aria-labelledby="share-title">
+    <div class="share-heading"><h2 id="share-title">Chia sẻ</h2><button id="close-share" type="button" class="text-button share-action" autofocus>Đóng</button></div>
+    <img id="share-image" class="share-image" alt="" hidden>
+    <p id="share-status" class="share-status" role="status"></p>
+    <div class="share-options"><button id="share-file" type="button" disabled>Chia sẻ ảnh</button><a id="save-share-image" href="#" download hidden>Lưu ảnh</a></div>
+    <div class="share-links"><button id="share-link" type="button" class="text-button share-action">Chia sẻ liên kết</button><a id="share-facebook" href="#" target="_blank" rel="noopener noreferrer">Facebook</a><a id="share-threads" href="#" target="_blank" rel="noopener noreferrer">Threads</a><button id="copy-share-link" type="button" class="text-button share-action">Sao chép liên kết</button></div>
+    <label for="share-url" class="sr-only">Liên kết chia sẻ</label><input id="share-url" type="url" readonly spellcheck="false" aria-label="Liên kết chia sẻ">
+  </dialog>
+  <p id="toast" class="toast" role="status" hidden></p>
+</body>
+</html>

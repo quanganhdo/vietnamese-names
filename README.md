@@ -1,3 +1,19 @@
+# tenhay.fyi
+
+Mã nguồn trang chọn tên tiếng Việt, ý nghĩa, ghép họ và lưu tên.
+
+## Build
+
+```sh
+npm ci
+npm run build
+npm test
+```
+
+Trang tĩnh nằm trong `public/`. `public/names.json` và `public/data-info.json` được tạo khi build.
+
+## Dữ liệu gốc (2017)
+
 Danh sách tên và ý nghĩa tên tiếng Việt lấy từ huggies (cập nhật cuối: 2017)
 
 File `names.jl` (668 entries) chỉ bao gồm tên và file `allnames.jl` (8576 entries) bao gồm cả đệm lẫn tên.
