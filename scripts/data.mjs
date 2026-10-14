@@ -1,4 +1,5 @@
 import { cleanName } from '../public/names-format.mjs';
+import { deduplicateMeanings } from './meanings.mjs';
 
 const genders = new Set(['male', 'female', 'unisex']);
 const cleanMeaning = value => value.normalize('NFC').trim().replace(/\s+/g, ' ');
@@ -21,6 +22,19 @@ export function mergeNameData(legacyRows, snapshot) {
     }
   }
   const baselineCount = names.size;
+  const legacyNames = new Set(names.keys());
+  let retainedPrior = 0;
+  for (const row of snapshot.retainedRecords || []) {
+    const name = cleanName(row.name);
+    const meaning = cleanMeaning(row.meaning);
+    if (!name || !meaning || !genders.has(row.gender) || !row.source?.url?.startsWith('https://www.huggies.com.vn/')) {
+      throw new Error('Invalid retained Huggies record');
+    }
+    if (!names.has(name)) {
+      names.set(name, { name, gender: row.gender, meanings: [meaning] });
+      retainedPrior++;
+    }
+  }
   const current = new Map();
   for (const source of snapshot.sources) {
     if (!source.url?.startsWith('https://www.huggies.com.vn/') || !source.records?.length) throw new Error('Invalid Huggies source');
@@ -53,7 +67,7 @@ export function mergeNameData(legacyRows, snapshot) {
     // Current source wording replaces every legacy meaning for this name.
     names.set(row.name, { name: row.name, gender, meanings: row.meanings });
   }
-  const rows = [...names.values()].map(({ name, gender, meanings }) => ({ name, gender, meaning: meanings.join('\n\n') }));
+  const rows = [...names.values()].map(({ name, gender, meanings }) => ({ name, gender, meaning: deduplicateMeanings(meanings).join('\n\n') }));
   const metadata = {
     retrievedAt: snapshot.retrievedAt,
     coverage: snapshot.coverage,
@@ -63,7 +77,9 @@ export function mergeNameData(legacyRows, snapshot) {
     refreshed: current.size,
     changed,
     added,
-    retainedLegacy: baselineCount - (current.size - added),
+    retainedLegacy: [...legacyNames].filter(name => !current.has(name)).length,
+    retainedPrior,
+    inventory: snapshot.inventory,
     sourceCount: snapshot.sources.length,
     excludedFullNameExamples: snapshot.sources.reduce((total, source) => total + (source.fullNameExamples?.length || 0), 0),
     sourceRecords: snapshot.sources.reduce((total, source) => total + source.records.length, 0),

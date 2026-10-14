@@ -61,7 +61,7 @@ test('production data is unique, valid, count-consistent, searchable and ordered
   const rows = JSON.parse(await readFile(new URL('../public/names.json', import.meta.url), 'utf8'));
   const metadata = JSON.parse(await readFile(new URL('../public/data-info.json', import.meta.url), 'utf8'));
   assert.equal(rows.length, metadata.total);
-  assert.equal(rows.length, metadata.legacyTotal + metadata.added);
+  assert.equal(rows.length, metadata.legacyTotal + metadata.added + metadata.retainedPrior);
   assert.ok(metadata.refreshed > 0);
   assert.ok(searchNames(prepareNames(rows), { length: '3' }).length > 0);
   assert.equal(new Set(rows.map(row => row.name)).size, rows.length);
