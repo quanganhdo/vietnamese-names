@@ -70,3 +70,36 @@ test('saved links can restore the entire expanded production catalogue', async (
   const url = createShareUrl('https://tenhay.fyi/', { kind: 'saved', names });
   assert.deepEqual(readSharedUrl(url).names, names);
 });
+
+test('individual image remains readable at phone width and preserves all meaning paragraphs', () => {
+  const meaning = 'Con có cuộc sống bình an, hạnh phúc.\n\nThông minh và nhân hậu.';
+  const svg = createShareSvg({kind:'name',name:'Hải Hà',family:'Tôn Nữ',meaning});
+  const texts = [...svg.matchAll(/<text x="(\d+)" y="(\d+)" font-size="(\d+)"([^>]*)>([^<]*)<\/text>/gu)]
+    .map(match => ({ x:Number(match[1]), y:Number(match[2]), font:Number(match[3]), attributes:match[4], text:match[5] }));
+  const title = texts.filter(row => row.attributes.includes('font-weight="600"') && row.text !== 'tenhay.fyi');
+  const body = texts.filter(row => !row.attributes.includes('font-weight'));
+  assert.ok(title.every(row => row.font * 360 / 1200 >= 28));
+  assert.ok(body.every(row => row.font * 360 / 1200 >= 16));
+  assert.equal(body.map(row => row.text).join(' '), meaning.replace(/\s+/gu, ' '));
+  assert.ok(body[0].y - title.at(-1).y > title.at(-1).font * .6);
+  const paragraphStart = body.findIndex(row => row.text.startsWith('Thông minh'));
+  assert.ok(body[paragraphStart].y - body[paragraphStart - 1].y > body[0].font * 1.5);
+  const height = Number(svg.match(/height="(\d+)"/u)[1]);
+  assert.ok(body.at(-1).y + body.at(-1).font < height);
+});
+
+test('measured wrapping fits long bold names and long meaning tokens without shrinking or clipping', () => {
+  const measure = (text, size, weight) => [...text].reduce((width, character) =>
+    width + size * (character === 'W' ? 1.2 : .6) * (weight === 600 ? 1.2 : 1), 0);
+  const name = 'Hải Đăng Khoa';
+  const family = 'Tôn Nữ Nguyễn Phúc';
+  const meaning = 'W'.repeat(80);
+  const svg = createShareSvg({kind:'name',name,family,meaning},measure);
+  const texts = [...svg.matchAll(/<text x="(\d+)" y="(\d+)" font-size="(\d+)"([^>]*)>([^<]*)<\/text>/gu)]
+    .map(match => ({ x:Number(match[1]), y:Number(match[2]), font:Number(match[3]), weight:match[4].includes('600') ? 600 : 400, text:match[5] }));
+  const content = texts.filter(row => row.text !== 'tenhay.fyi');
+  for (const row of content) assert.ok(row.x + measure(row.text,row.font,row.weight) <= 1128, row.text);
+  assert.equal(content.filter(row => row.weight === 600).map(row => row.text).join(' '), family + ' ' + name);
+  assert.equal(content.filter(row => row.weight === 400).map(row => row.text).join(''), meaning);
+  assert.ok(content.filter(row => row.weight === 400).every(row => row.font >= 52));
+});

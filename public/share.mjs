@@ -56,23 +56,46 @@ function xml(value) {
   return String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[character]));
 }
 
-function wrap(text, width) {
+// The browser supplies canvas measurements. This proportional estimate keeps
+// SVG generation available to Node and other environments without a canvas.
+function estimatedTextWidth(text, fontSize, fontWeight = 400) {
+  return [...text.normalize('NFD').replace(/\p{M}/gu, '').replaceAll('đ', 'd').replaceAll('Đ', 'D')].reduce((width, character) => {
+    const units = /\s/u.test(character) ? .28
+      : /[MW@%]/u.test(character) ? .94
+      : /[mw]/u.test(character) ? .84
+      : /[ilI.,'‘’!:;|]/u.test(character) ? .28
+      : /[fjrt()]/u.test(character) ? .37
+      : /[A-Z]/u.test(character) ? .72
+      : /[^\u0000-\u024f]/u.test(character) ? 1
+      : .56;
+    return width + units * fontSize * (fontWeight >= 600 ? 1.08 : 1);
+  }, 0);
+}
+
+function wrap(text, width, fontSize, measureText, fontWeight = 400) {
   const lines = [];
   let line = '';
-  for (const word of text.trim().split(/\s+/).filter(Boolean)) {
-    const chars = [...word];
-    if (line && [...line].length + chars.length + 1 > width) { lines.push(line); line = ''; }
-    while (chars.length > width) {
-      if (line) { lines.push(line); line = ''; }
-      lines.push(chars.splice(0, width).join(''));
+  for (const word of text.trim().split(/\s+/u).filter(Boolean)) {
+    const candidate = line ? line + ' ' + word : word;
+    if (measureText(candidate, fontSize, fontWeight) <= width) {
+      line = candidate;
+      continue;
     }
-    if (chars.length) line = line ? line + ' ' + chars.join('') : chars.join('');
+    if (line) { lines.push(line); line = ''; }
+    // Split unusually long tokens rather than clipping or shrinking the font.
+    for (const character of [...word.normalize('NFC')]) {
+      if (line && measureText(line + character, fontSize, fontWeight) > width) {
+        lines.push(line);
+        line = '';
+      }
+      line += character;
+    }
   }
   if (line) lines.push(line);
   return lines;
 }
 
-export function createShareSvg({ kind, family = '', display = 'vi', name = '', meaning = '', names = [] }) {
+export function createShareSvg({ kind, family = '', display = 'vi', name = '', meaning = '', names = [] }, measureText = estimatedTextWidth) {
   let content = '';
   let height = 630;
   if (kind === 'saved') {
@@ -91,19 +114,24 @@ export function createShareSvg({ kind, family = '', display = 'vi', name = '', m
     height = Math.max(630, 184 + perColumn * 78 + 64);
   } else {
     const full = formatFullName(family, name, display);
-    const font = full.length > 80 ? 38 : full.length > 40 ? 48 : 62;
-    const lines = wrap(full, Math.floor(1056 / (font * .7)));
-    content = lines.map((line, index) => '<text x="72" y="' + (184 + index * (font + 10)) + '" font-size="' + font + '" font-weight="600">' + xml(line) + '</text>').join('');
-    let y = 184 + (lines.length - 1) * (font + 10) + 70;
-    if (meaning) {
-
-      const all = wrap(meaning, 56);
-      content += all.map((line, index) => '<text x="72" y="' + (y + index * 38) + '" font-size="28">' + xml(line) + '</text>').join('');
-      y += all.length * 38;
+    const nameFont = 112;
+    const meaningFont = 56;
+    const lines = wrap(full, 1056, nameFont, measureText, 600);
+    content = lines.map((line, index) => '<text x="72" y="' + (236 + index * 132) + '" font-size="' + nameFont + '" font-weight="600">' + xml(line) + '</text>').join('');
+    let y = 236 + (lines.length - 1) * 132 + 100;
+    const paragraphs = meaning.trim().split(/\n\s*\n/u).filter(Boolean);
+    for (const [index, paragraph] of paragraphs.entries()) {
+      if (index) y += 24;
+      for (const line of wrap(paragraph, 1056, meaningFont, measureText)) {
+        content += '<text x="72" y="' + y + '" font-size="' + meaningFont + '">' + xml(line) + '</text>';
+        y += 78;
+      }
     }
-    height = Math.max(630, y + 88);
+    height = Math.max(630, y + 32);
   }
-  return '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="' + height + '" viewBox="0 0 1200 ' + height + '"><rect width="1200" height="' + height + '" fill="#fff"/><g font-family="Arial, sans-serif" fill="#202020"><text x="72" y="82" font-size="36" font-weight="600">tenhay.fyi</text>' + content + '</g></svg>';
+  const brandFont = kind === 'saved' ? 36 : 48;
+  const brandY = kind === 'saved' ? 82 : 96;
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="' + height + '" viewBox="0 0 1200 ' + height + '"><rect width="1200" height="' + height + '" fill="#fff"/><g font-family="Arial, sans-serif" fill="#202020"><text x="72" y="' + brandY + '" font-size="' + brandFont + '" font-weight="600">tenhay.fyi</text>' + content + '</g></svg>';
 }
 
 export async function svgToPng(svg) {

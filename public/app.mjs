@@ -1,4 +1,4 @@
-import { createShareUrl, readSharedUrl, encodeSavedNames, createShareSvg, svgToPng } from './share.mjs';
+import { createShareUrl, readSharedUrl, encodeSavedNames, createShareSvg, svgToPng } from './share.mjs?v=31';
 import { createClassListSvg, createNameCardSvg } from './preview.mjs';
 import { cleanName, capitalizeFamily, formatFullName } from './names-format.mjs';
 import { prepareNames, searchNames, shuffle, highlightParts, normalize } from './search.mjs';
@@ -586,7 +586,15 @@ async function prepareShareImage(context, imageData) {
       const response = await fetch(new URL('./share.png?v=2', import.meta.url));
       if (!response.ok) throw new Error('Sharing image unavailable');
       blob = await response.blob();
-    } else blob = await svgToPng(createShareSvg(imageData));
+    } else {
+      const canvasContext = document.createElement('canvas').getContext('2d');
+      if (!canvasContext) throw new Error('Canvas unavailable');
+      const measureText = (text, fontSize, fontWeight = 400) => {
+        canvasContext.font = fontWeight + ' ' + fontSize + 'px Arial, sans-serif';
+        return canvasContext.measureText(text).width;
+      };
+      blob = await svgToPng(createShareSvg(imageData, measureText));
+    }
     if (shareContext !== context || !shareDialog.open) return;
     context.file = new File([blob], context.kind === 'saved' ? 'tenhay-danh-sach.png' : 'tenhay-ten.png', { type: 'image/png' });
     context.objectUrl = URL.createObjectURL(blob);
