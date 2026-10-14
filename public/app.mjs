@@ -416,7 +416,6 @@ async function load() {
       }
       shareRestored = true;
     }
-    $('total-names').textContent = format(state.rows.length);
     render({ resetOrder: false });
     if (incomingShare.name && valid.has(incomingShare.name)) {
       const trigger = [...$('name-grid').children].find(card => card.dataset.name === incomingShare.name)?.querySelector('.name-title') || $('results');
@@ -584,7 +583,7 @@ async function prepareShareImage(context, imageData) {
   try {
     let blob;
     if (context.kind === 'page') {
-      const response = await fetch(new URL('./share.png', import.meta.url));
+      const response = await fetch(new URL('./share.png?v=2', import.meta.url));
       if (!response.ok) throw new Error('Sharing image unavailable');
       blob = await response.blob();
     } else blob = await svgToPng(createShareSvg(imageData));

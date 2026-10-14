@@ -62,7 +62,15 @@ const vocabulary = text => new Set(text.normalize('NFC').toLocaleLowerCase('vi')
     assert.ok(row.meaning.trim(), name);
   }
   assert.equal(new Set(rows.map(row => row.name)).size, rows.length);
-
+  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  const svg = await readFile(new URL('../assets/share.svg', import.meta.url), 'utf8');
+  assert.ok(!html.includes('id="total-names"'));
+  const imageLabel = svg.match(/>([0-9,]+)\+ tên tiếng Việt kèm ý nghĩa<\/text>/);
+  assert.ok(imageLabel);
+  const lowerBound = Number(imageLabel[1].replaceAll(',', ''));
+  assert.ok(lowerBound <= rows.length);
+  assert.equal(imageLabel[1], '10,000');
+  assert.equal(html.split(imageLabel[1] + '+ tên tiếng Việt kèm ý nghĩa').length - 1, 2);
 });
 
 test('a full-name example cannot become a three-word selectable name by dropping one surname', () => {

@@ -12,10 +12,8 @@ a { color: var(--link); text-underline-offset: 3px; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
 button:disabled { opacity: .5; cursor: default; }
 .page { max-width: 1360px; margin: auto; padding: 0 28px; }
-header { display: flex; align-items: center; justify-content: space-between; padding: 32px 0 24px; gap: 20px; }
-.heading { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+header { display: flex; align-items: center; justify-content: space-between; padding: 32px 0 24px; gap: 12px; }
 h1 { margin: 0; font-size: 25px; font-weight: 650; letter-spacing: -.5px; }
-.total { font-size: 14px; color: var(--muted); }
 .filters { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 0 24px; padding: 20px 0 23px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .filters > div > label { display: block; margin-bottom: 7px; font-weight: 550; font-size: 16px; }
 .optional { font-weight: 400; color: var(--muted); }
@@ -55,8 +53,8 @@ legend { padding: 0; margin-bottom: 6px; color: var(--muted); font-size: 14px; }
 .empty { padding: 36px 0 44px; }
 .empty h2 { margin: 0; font-size: 17px; font-weight: 600; }
 .empty p { color: var(--muted); margin: 6px 0 14px; }
-footer { border-top: 1px solid var(--line); padding: 18px 0 32px; color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; }
-footer p { margin: 0; }
+.header-actions { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+.header-actions > a { display: inline-flex; align-items: center; min-height: 44px; font-size: 16px; }
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); border-radius: 3px; padding: 9px 15px; font-size: 14px; max-width: calc(100vw - 32px); }
 .sr-only, .skip { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
 .skip:focus { width: auto; height: auto; clip: auto; top: 8px; left: 10px; background: var(--bg); padding: 10px; z-index: 10; }
@@ -64,7 +62,7 @@ footer p { margin: 0; }
 @media (max-width: 640px) {
   .page { padding: 0 18px; }
   header { padding: 23px 0 18px; }
-  .heading { gap: 4px 12px; }
+  .header-actions { gap: 14px; }
   h1 { font-size: 22px; }
   .filters { grid-template-columns: minmax(0, 1fr); gap: 15px; padding: 17px 0; }
   .filter-options { padding-top: 0; gap: 15px 24px; }
