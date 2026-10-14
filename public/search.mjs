@@ -23,7 +23,7 @@ export function prepareNames(rows) {
 }
 
 export function searchNames(rows, { query = '', given = '', scope = 'name', gender = 'all', length = 'all', savedOnly = false, saved = new Set() } = {}) {
-  const tokens = [...new Set(normalize(query).split(' ').filter(Boolean))];
+  const tokens = normalize(query).split(' ').filter(Boolean);
   const ending = normalize(given);
   return rows.filter(row => {
     // A chosen given name must be the complete suffix, with a middle name before it.
@@ -32,7 +32,13 @@ export function searchNames(rows, { query = '', given = '', scope = 'name', gend
     if (length !== 'all' && row.words !== Number(length)) return false;
     if (savedOnly && !saved.has(row.name)) return false;
     const words = row.nameText.split(' ');
-    return tokens.every(token => words.includes(token) || (scope === 'all' && row.meaningText.includes(token)));
+    return tokens.every((token, index) => {
+      // Allow the word being typed after a complete name word, without
+      // turning single-word queries into substring searches.
+      const finalPrefix = tokens.length > 1 && index === tokens.length - 1;
+      return words.some(word => word === token || (finalPrefix && word.startsWith(token)))
+        || (scope === 'all' && row.meaningText.includes(token));
+    });
   }).sort(compareNames);
 }
 
@@ -46,8 +52,8 @@ export function shuffle(rows, random = Math.random) {
 }
 
 // Map accent-insensitive matches back to the original text, preserving every character.
-export function highlightParts(text, query, { wholeWords = false } = {}) {
-  const tokens = [...new Set(normalize(query).split(' ').filter(Boolean))];
+export function highlightParts(text, query, { wholeWords = false, prefixLastWord = false } = {}) {
+  const tokens = normalize(query).split(' ').filter(Boolean);
   if (!tokens.length) return [{ text, matched: false }];
   let folded = '';
   let offset = 0;
@@ -69,11 +75,13 @@ export function highlightParts(text, query, { wholeWords = false } = {}) {
     }
   }
   const ranges = [];
-  for (const token of tokens) {
+  for (const [tokenIndex, token] of tokens.entries()) {
     let from = 0;
     for (let index = folded.indexOf(token, from); index !== -1; index = folded.indexOf(token, from)) {
-      const whole = (index === 0 || folded[index - 1] === ' ') && (index + token.length === folded.length || folded[index + token.length] === ' ');
-      if (!wholeWords || whole) ranges.push({ start: starts[index], end: ends[index + token.length - 1] });
+      const startsWord = index === 0 || folded[index - 1] === ' ';
+      const endsWord = index + token.length === folded.length || folded[index + token.length] === ' ';
+      const finalPrefix = prefixLastWord && tokens.length > 1 && tokenIndex === tokens.length - 1;
+      if (!wholeWords || (startsWord && (endsWord || finalPrefix))) ranges.push({ start: starts[index], end: ends[index + token.length - 1] });
       from = index + 1;
     }
   }

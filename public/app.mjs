@@ -1,7 +1,7 @@
 import { createShareUrl, readSharedUrl, encodeSavedNames, createShareSvg, svgToPng } from './share.mjs?v=31';
 import { createClassListSvg, createNameCardSvg } from './preview.mjs';
 import { cleanName, capitalizeFamily, formatFullName } from './names-format.mjs';
-import { prepareNames, searchNames, shuffle, highlightParts, normalize } from './search.mjs';
+import { prepareNames, searchNames, shuffle, highlightParts, normalize } from './search.mjs?v=32';
 
 const $ = id => document.getElementById(id);
 const format = number => number.toLocaleString('en-US');
@@ -88,7 +88,7 @@ function fullName(name) {
 }
 
 function appendHighlighted(parent, text, query = $('query').value, wholeWords = false) {
-  for (const part of highlightParts(text, query, { wholeWords })) {
+  for (const part of highlightParts(text, query, { wholeWords, prefixLastWord: wholeWords })) {
     if (part.matched) {
       const mark = document.createElement('mark');
       mark.textContent = part.text;

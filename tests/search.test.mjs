@@ -62,6 +62,7 @@ test('production data is unique, valid, count-consistent, searchable and ordered
   const metadata = JSON.parse(await readFile(new URL('../public/data-info.json', import.meta.url), 'utf8'));
   assert.equal(rows.length, metadata.total);
   assert.equal(rows.length, metadata.legacyTotal + metadata.added + metadata.retainedPrior);
+  assert.equal(rows.length, metadata.refreshed + metadata.retainedLegacy + metadata.retainedPrior);
   assert.ok(metadata.refreshed > 0);
   assert.ok(searchNames(prepareNames(rows), { length: '3' }).length > 0);
   assert.equal(new Set(rows.map(row => row.name)).size, rows.length);
@@ -71,6 +72,7 @@ test('production data is unique, valid, count-consistent, searchable and ordered
   const prepared = prepareNames(rows);
   assert.ok(searchNames(prepared, { query: 'binh yen', scope: 'all' }).length > 0);
   assert.ok(searchNames(prepared, { query: 'Ngọc Anh' }).some(row => row.name === 'Ngọc Anh'));
+  assert.ok(searchNames(prepared, { query: 'ngoc y' }).some(row => row.name === 'Ngọc Yến'));
 });
 test('shuffle preserves every record and leaves the source untouched', () => {
   const before = [...fixture];
@@ -98,4 +100,48 @@ test('a fixed given name matches a complete suffix and requires a middle name', 
   assert.deepEqual(searchNames(rows, { given: 'an', query: 'minh' }).map(row => row.name), ['Minh An']);
   assert.deepEqual(searchNames(rows, { given: 'an', length: '1' }), []);
   assert.deepEqual(searchNames(rows, { given: '  ' }), searchNames(rows));
+});
+
+test('the final word in a multiword name query can be an accent-insensitive prefix', () => {
+  const rows = prepareNames(['Ngọc Yến', 'Ngọc Yên', 'Ngọc Ý', 'Ngọc An', 'Ngọc Anh', 'Ngọc Huyền', 'Yến', 'Ánh Yến'].map(name => ({name,gender:'unisex',meaning:''})));
+  for (const query of ['ngoc y', 'NGỌC Y', 'Ngọc Y'.normalize('NFD')]) {
+    const names = searchNames(rows,{query}).map(row=>row.name);
+    assert.ok(names.includes('Ngọc Yến'),query);
+    assert.ok(names.includes('Ngọc Yên'),query);
+    assert.ok(names.includes('Ngọc Ý'),query);
+    assert.ok(!names.includes('Ngọc Huyền'),query);
+    assert.ok(!names.includes('Ánh Yến'),query);
+  }
+  assert.deepEqual(searchNames(rows,{query:'ngoc ye'}).map(row=>row.name),['Ngọc Yên','Ngọc Yến']);
+  assert.deepEqual(searchNames(rows,{query:'goc y'}),[]);
+  assert.deepEqual(searchNames(rows,{query:'an'}).map(row=>row.name),['Ngọc An']);
+  assert.deepEqual(new Set(searchNames(rows,{query:'yen'}).map(row=>row.name)),new Set(['Yến','Ánh Yến','Ngọc Yên','Ngọc Yến']));
+});
+
+test('name prefix matching still applies gender, length, saved and chosen given-name filters', () => {
+  const rows = prepareNames([
+    {name:'Ngọc Yến',gender:'female',meaning:''},
+    {name:'Ngọc Yên',gender:'unisex',meaning:''},
+    {name:'Minh Ngọc Yến',gender:'female',meaning:''},
+  ]);
+  assert.deepEqual(searchNames(rows,{query:'ngoc y',gender:'male'}).map(row=>row.name),['Ngọc Yên']);
+  assert.deepEqual(searchNames(rows,{query:'ngoc y',length:'3'}).map(row=>row.name),['Minh Ngọc Yến']);
+  assert.deepEqual(searchNames(rows,{query:'ngoc y',savedOnly:true,saved:new Set(['Ngọc Yến'])}).map(row=>row.name),['Ngọc Yến']);
+  assert.deepEqual(searchNames(rows,{query:'ngoc y',given:'yến'}).map(row=>row.name),['Ngọc Yên','Minh Ngọc Yến','Ngọc Yến']);
+});
+
+test('name highlighting marks the typed prefix while preserving accented and decomposed spelling', () => {
+  assert.deepEqual(highlightParts('Ngọc Yến','ngoc y',{wholeWords:true,prefixLastWord:true}),[
+    {text:'Ngọc',matched:true},{text:' ',matched:false},{text:'Y',matched:true},{text:'ến',matched:false},
+  ]);
+  const text='Ngọc Yến'.normalize('NFD');
+  const parts=highlightParts(text,'ngoc ye',{wholeWords:true,prefixLastWord:true});
+  assert.equal(parts.map(part=>part.text).join(''),text);
+  assert.deepEqual(parts.filter(part=>part.matched).map(part=>part.text.normalize('NFC')),['Ngọc','Yế']);
+  assert.deepEqual(highlightParts('Ngọc Huyền','ngoc y',{wholeWords:true,prefixLastWord:true}),[
+    {text:'Ngọc',matched:true},{text:' Huyền',matched:false},
+  ]);
+  assert.deepEqual(highlightParts('An Anh Thanh','an',{wholeWords:true,prefixLastWord:true}),[
+    {text:'An',matched:true},{text:' Anh Thanh',matched:false},
+  ]);
 });
